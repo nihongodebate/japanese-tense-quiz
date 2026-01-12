@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { RefreshCw, ArrowRight, ArrowLeft, Check, X, BookText, Sparkles, Palette, PersonStanding, Clock, HelpCircle, Home } from 'lucide-react';
 
-// --- 背景コンポーネント (麻の葉文様) ---
+// --- 背景コンポーネント (和風デザイン) ---
 const GeometricBackground = () => (
   <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1, backgroundColor: '#f8fafc' }}>
     <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
@@ -17,7 +17,7 @@ const GeometricBackground = () => (
   </div>
 );
 
-// --- クイズ用データセット ---
+// --- 膨大なデータセット (各カテゴリ20語) ---
 const quizData = {
   noun: [
     { word: '学生', reading: 'がくせい', korean: '학생', conjugations: { present: '学生です', negative: '学生じゃありません', negative_alt: '学生じゃないです', past: '学生でした', pastNegative: '学生じゃありませんでした', pastNegative_alt: '学生じゃなかったです' } },
@@ -53,7 +53,7 @@ const quizData = {
     { word: '難しい', reading: 'むずかしい', korean: '어렵다', conjugations: { present: '難しいです', negative: '難しくありません', negative_alt: '難しくないです', past: '難しかったです', pastNegative: '難しくありませんでした', pastNegative_alt: '難しくなかったです' } },
     { word: '易しい', reading: 'やさしい', korean: '쉽다', conjugations: { present: '易しいです', negative: '易しくありません', negative_alt: '易しくないです', past: '易しかったです', pastNegative: '易しくありませんでした', pastNegative_alt: '易しくなかったです' } },
     { word: '面白い', reading: 'おもしろい', korean: '재미있다', conjugations: { present: '面白いです', negative: '面白くありません', negative_alt: '面白くないです', past: '面白かったです', pastNegative: '面白くありませんでした', pastNegative_alt: '面白くなかったです' } },
-    { word: '美味しい', reading: 'おいしい', korean: '맛있다', conjugations: { present: '美味しいです', negative: '美味しくありません', negative_alt: '美味しくないです', past: '美味しかったです', pastNegative: '美味しくありませんでした', pastNegative_alt: '美味しかったです' } },
+    { word: '美味しい', reading: 'おいしい', korean: '맛있다', conjugations: { present: '美味しいです', negative: '美味しくありません', negative_alt: '美味しくないです', past: '美味しかったです', pastNegative: '美味しくありませんでした', pastNegative_alt: '美味しくなかったです' } },
     { word: '忙しい', reading: 'いそがしい', korean: '바쁘다', conjugations: { present: '忙しいです', negative: '忙しくありません', negative_alt: '忙しくないです', past: '忙しかったです', pastNegative: '忙しくありませんでした', pastNegative_alt: '忙しくなかったです' } },
     { word: '楽しい', reading: 'たのしい', korean: '즐겁다', conjugations: { present: '楽しいです', negative: '楽しくありません', negative_alt: '楽しくないです', past: '楽しかったです', pastNegative: '楽しくありませんでした', pastNegative_alt: '楽しくなかったです' } },
     { word: '高い', reading: 'たかい', korean: '비싸다/높다', conjugations: { present: '高いです', negative: '高くありません', negative_alt: '高くないです', past: '高かったです', pastNegative: '高くありませんでした', pastNegative_alt: '高くなかったです' } },
@@ -112,7 +112,7 @@ const quizData = {
 const posMap = { 
   noun: { label: '명사', icon: BookText, color: 'sky' }, 
   i_adjective: { label: 'い형용사', icon: Sparkles, color: 'amber' }, 
-  na_adjective: { label: 'な형용사', icon: Palette, color: 'violet' }, 
+  na_adjective: { label: '나형용사', icon: Palette, color: 'violet' }, 
   verb: { label: '동사', icon: PersonStanding, color: 'rose' } 
 };
 
@@ -132,76 +132,42 @@ const tenseMapKorean = {
   random: '랜덤'
 };
 
-// 配列をシャッフルするヘルパー関数
 const shuffleArray = (array) => {
   return [...array].sort(() => Math.random() - 0.5);
 };
 
-// 学習者が間違えやすい選択肢を生成するヘルパー関数 (強化版)
 const generateIncorrectOptions = (wordData, posType, tense, correctAnswer) => {
     const { word, conjugations } = wordData;
     let incorrectPool = [];
 
     if (posType === 'verb') {
         const stem = word.slice(0, -1);
-        const dictForm = word;
-        if (tense === 'present') {
-            incorrectPool.push(dictForm + 'ます', stem + 'ります', stem + 'す');
-        } else if (tense === 'negative') {
-            incorrectPool.push(dictForm + 'ません', stem + 'ません', stem + 'りません', stem + 'ろません');
-        } else if (tense === 'past') {
-            incorrectPool.push(dictForm + 'ました', stem + 'りました', stem + 'した');
-        } else if (tense === 'pastNegative') {
-            incorrectPool.push(dictForm + 'ませんでした', stem + 'りませんでした', stem + 'ないでした');
-        }
+        if (tense === 'present') incorrectPool.push(word + 'ます', stem + 'ります');
+        else if (tense === 'negative') incorrectPool.push(word + 'ません', stem + 'りません');
+        else if (tense === 'past') incorrectPool.push(word + 'ました', stem + 'りました');
+        else if (tense === 'pastNegative') incorrectPool.push(word + 'ませんでした', stem + 'りませんでした');
     } else if (posType === 'i_adjective') {
         const stem = word.slice(0, -1);
-        if (tense === 'present') {
-            incorrectPool.push(word + 'です', stem + 'です', word + 'ます');
-        } else if (tense === 'negative') {
-            incorrectPool.push(stem + 'ないです', word + 'じゃないです', stem + 'ありません');
-        } else if (tense === 'past') {
-            incorrectPool.push(word + 'でした', word + 'かったです', stem + 'でした', stem + 'かたです');
-        } else if (tense === 'pastNegative') {
-            incorrectPool.push(word + 'じゃなかったです', stem + 'くなかった', stem + 'なかったです');
-        }
+        if (tense === 'present') incorrectPool.push(word + 'です', stem + 'です');
+        else if (tense === 'negative') incorrectPool.push(stem + 'ないです', word + 'じゃないです');
+        else if (tense === 'past') incorrectPool.push(word + 'でした', stem + 'でした');
+        else if (tense === 'pastNegative') incorrectPool.push(word + 'じゃなかったです', stem + 'なかったです');
     } else if (posType === 'na_adjective' || posType === 'noun') {
-        if (tense === 'present') {
-            incorrectPool.push(word + 'い', word + 'ます');
-        } else if (tense === 'negative') {
-            incorrectPool.push(word + 'くないです', word + 'くない', word + 'くありません');
-        } else if (tense === 'past') {
-            incorrectPool.push(word + 'かったです', word + 'した');
-        } else if (tense === 'pastNegative') {
-            incorrectPool.push(word + 'くなかったです', word + 'くありませんでした');
-        }
+        if (tense === 'present') incorrectPool.push(word + 'い');
+        else if (tense === 'negative') incorrectPool.push(word + 'くないです');
+        else if (tense === 'past') incorrectPool.push(word + 'かったです');
+        else if (tense === 'pastNegative') incorrectPool.push(word + 'くなかったです');
     }
 
-    const allValidForms = Object.values(conjugations);
-    allValidForms.forEach(f => incorrectPool.push(f));
-
-    let alternativeCorrect = null;
-    if (conjugations.negative_alt) {
-        if (correctAnswer === conjugations.negative) alternativeCorrect = conjugations.negative_alt;
-        if (correctAnswer === conjugations.negative_alt) alternativeCorrect = conjugations.negative;
-        if (correctAnswer === conjugations.pastNegative) alternativeCorrect = conjugations.pastNegative_alt;
-        if (correctAnswer === conjugations.pastNegative_alt) alternativeCorrect = conjugations.pastNegative;
-    }
-
-    const finalPool = [...new Set(incorrectPool)].filter(
-        opt => opt && opt !== correctAnswer && opt !== alternativeCorrect
-    );
-
+    Object.values(conjugations).forEach(f => incorrectPool.push(f));
+    const finalPool = [...new Set(incorrectPool)].filter(opt => opt && opt !== correctAnswer);
     return shuffleArray(finalPool).slice(0, 2);
 };
 
-// ルール説明モーダルコンポーネント
 const RuleExplanationModal = ({ posType, onClose }) => {
     const rules = {
         noun: {
-            title: "명사 활용",
-            example: "学生",
-            color: "sky",
+            title: "명사 활용", example: "学生", color: "sky",
             data: [
                 { tense: "현재형", form: [{ text: '学生', conjugated: false }, { text: 'です', conjugated: true }] },
                 { tense: "부정형", form: [{ text: '学生', conjugated: false }, { text: 'じゃありません', conjugated: true }], form_alt: [{ text: '学生', conjugated: false }, { text: 'じゃないです', conjugated: true }] },
@@ -210,9 +176,7 @@ const RuleExplanationModal = ({ posType, onClose }) => {
             ]
         },
         i_adjective: {
-            title: "い형용사 활용",
-            example: "大きい",
-            color: "amber",
+            title: "い형용사 활용", example: "大きい", color: "amber",
             data: [
                 { tense: "현재형", form: [{ text: '大き', conjugated: false }, { text: 'いです', conjugated: true }] },
                 { tense: "부정형", form: [{ text: '大き', conjugated: false }, { text: 'くありません', conjugated: true }], form_alt: [{ text: '大き', conjugated: false }, { text: 'くないです', conjugated: true }] },
@@ -221,9 +185,7 @@ const RuleExplanationModal = ({ posType, onClose }) => {
             ]
         },
         na_adjective: {
-            title: "나형용사 활용",
-            example: "静か",
-            color: "violet",
+            title: "나형용사 활용", example: "静か", color: "violet",
             data: [
                 { tense: "현재형", form: [{ text: '静か', conjugated: false }, { text: 'です', conjugated: true }] },
                 { tense: "부정형", form: [{ text: '静か', conjugated: false }, { text: 'じゃありません', conjugated: true }], form_alt: [{ text: '静か', conjugated: false }, { text: 'じゃないです', conjugated: true }] },
@@ -232,9 +194,7 @@ const RuleExplanationModal = ({ posType, onClose }) => {
             ]
         },
         verb: {
-            title: "동사 활용 - ます형",
-            example: "行きます",
-            color: "rose",
+            title: "동사 활용 - ます형", example: "行きます", color: "rose",
             data: [
                 { tense: "현재형", form: [{ text: '行き', conjugated: false }, { text: 'ます', conjugated: true }] },
                 { tense: "부정형", form: [{ text: '行き', conjugated: false }, { text: 'ません', conjugated: true }] },
@@ -261,17 +221,13 @@ const RuleExplanationModal = ({ posType, onClose }) => {
                             <p className="font-semibold text-gray-500 text-sm">{row.tense}</p>
                             <p className="text-lg text-gray-800 font-mono">
                                 {row.form.map((part, i) => (
-                                    <span key={i} className={part.conjugated ? 'text-indigo-600 underline font-bold' : ''}>
-                                        {part.text}
-                                    </span>
+                                    <span key={i} className={part.conjugated ? 'text-indigo-600 underline font-bold' : ''}>{part.text}</span>
                                 ))}
                                 {row.form_alt && (
                                     <>
                                         <span className="text-gray-400 mx-2">/</span>
                                         {row.form_alt.map((part, i) => (
-                                            <span key={i} className={part.conjugated ? 'text-indigo-600 underline font-bold' : ''}>
-                                                {part.text}
-                                            </span>
+                                            <span key={i} className={part.conjugated ? 'text-indigo-600 underline font-bold' : ''}>{part.text}</span>
                                         ))}
                                     </>
                                 )}
@@ -279,9 +235,7 @@ const RuleExplanationModal = ({ posType, onClose }) => {
                         </div>
                     ))}
                 </div>
-                <button onClick={onClose} className={`w-full mt-4 bg-${currentRule.color}-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-${currentRule.color}-600 transition-colors`}>
-                    닫기
-                </button>
+                <button onClick={onClose} className={`w-full mt-4 bg-${currentRule.color}-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-${currentRule.color}-600 transition-colors`}>닫기</button>
             </div>
         </div>
     );
@@ -304,9 +258,7 @@ const App = () => {
   useEffect(() => {
     if (step === 'quiz' && !isAnswered) {
       setTimer(10);
-      const id = setInterval(() => {
-        setTimer(prev => prev - 1);
-      }, 1000);
+      const id = setInterval(() => setTimer(prev => prev - 1), 1000);
       setIntervalId(id);
       return () => clearInterval(id);
     }
@@ -320,16 +272,8 @@ const App = () => {
     }
   }, [timer, isAnswered, intervalId]);
 
-  const handlePosSelect = (pos) => {
-    setPosType(pos);
-    setStep('tense_select');
-  };
-
-  const handleTenseSelect = (tense) => {
-    setTenseType(tense);
-    setupQuiz(posType, tense);
-    setStep('quiz');
-  };
+  const handlePosSelect = (pos) => { setPosType(pos); setStep('tense_select'); };
+  const handleTenseSelect = (tense) => { setTenseType(tense); setupQuiz(posType, tense); setStep('quiz'); };
 
   const setupQuiz = (pos, tense) => {
     const wordBank = quizData[pos];
@@ -337,40 +281,11 @@ const App = () => {
     const availableTenses = ['present', 'negative', 'past', 'pastNegative'];
 
     const quizQuestions = shuffledWords.map(wordData => {
-      const { conjugations } = wordData;
-      const currentTense = tense === 'random' 
-        ? availableTenses[Math.floor(Math.random() * availableTenses.length)] 
-        : tense;
-
-      let correctAnswer;
-      if ((pos === 'noun' || pos.includes('adjective')) && conjugations.negative_alt) {
-        if (currentTense === 'negative') {
-          correctAnswer = Math.random() < 0.5 ? conjugations.negative : conjugations.negative_alt;
-        } else if (currentTense === 'pastNegative') {
-          correctAnswer = Math.random() < 0.5 ? conjugations.pastNegative : conjugations.pastNegative_alt;
-        } else {
-          correctAnswer = conjugations[currentTense];
-        }
-      } else {
-        correctAnswer = conjugations[currentTense];
-      }
-      
+      const currentTense = tense === 'random' ? availableTenses[Math.floor(Math.random() * availableTenses.length)] : tense;
+      const correctAnswer = wordData.conjugations[currentTense];
       const incorrectAnswers = generateIncorrectOptions(wordData, pos, currentTense, correctAnswer);
       let options = shuffleArray([correctAnswer, ...incorrectAnswers]);
-      
-      if (options.length < 3) {
-          const fallbackPool = [...new Set(wordBank.flatMap(w => Object.values(w.conjugations)))];
-          const fallbackOptions = shuffleArray(fallbackPool.filter(opt => !options.includes(opt))).slice(0, 3 - options.length);
-          options.push(...fallbackOptions);
-          options = shuffleArray(options);
-      }
-      
-      return { 
-        ...wordData, 
-        correctAnswer, 
-        options: options.slice(0, 3),
-        targetTenseLabel: tenseMapKorean[currentTense]
-      };
+      return { ...wordData, correctAnswer, options: options.slice(0, 3), targetTenseLabel: tenseMapKorean[currentTense] };
     });
     setQuestions(quizQuestions);
   };
@@ -380,9 +295,7 @@ const App = () => {
     if (intervalId) clearInterval(intervalId);
     setSelectedAnswer(answer);
     setIsAnswered(true);
-    if (answer === questions[currentIndex].correctAnswer) {
-      setScore(prev => prev + 1);
-    }
+    if (answer === questions[currentIndex].correctAnswer) setScore(prev => prev + 1);
   };
 
   const handleNextQuestion = () => {
@@ -404,25 +317,14 @@ const App = () => {
   };
 
   const resetQuiz = () => {
-    setStep('pos_select');
-    setPosType(null);
-    setTenseType(null);
-    setQuestions([]);
-    setCurrentIndex(0);
-    setScore(0);
-    setSelectedAnswer(null);
-    setIsAnswered(false);
-    setAnswerHistory([]);
+    setStep('pos_select'); setPosType(null); setTenseType(null);
+    setQuestions([]); setCurrentIndex(0); setScore(0);
+    setSelectedAnswer(null); setIsAnswered(false); setAnswerHistory([]);
   };
 
   const retrySameQuiz = () => {
-    setScore(0);
-    setCurrentIndex(0);
-    setSelectedAnswer(null);
-    setIsAnswered(false);
-    setAnswerHistory([]);
-    setupQuiz(posType, tenseType);
-    setStep('quiz');
+    setScore(0); setCurrentIndex(0); setSelectedAnswer(null);
+    setIsAnswered(false); setAnswerHistory([]); setupQuiz(posType, tenseType); setStep('quiz');
   };
 
   const renderContent = () => {
@@ -436,7 +338,7 @@ const App = () => {
                 const Icon = posMap[key].icon;
                 const color = posMap[key].color;
                 return (
-                  <button key={key} onClick={() => handlePosSelect(key)} className={`flex flex-col items-center justify-center p-6 bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:border-${color}-300 hover:bg-${color}-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-${color}-500 transition-all duration-200 transform hover:scale-105`}>
+                  <button key={key} onClick={() => handlePosSelect(key)} className={`flex flex-col items-center justify-center p-6 bg-white border-2 border-gray-200 rounded-xl shadow-sm hover:border-${color}-300 hover:bg-${color}-50 transition-all duration-200 transform hover:scale-105`}>
                     <Icon className={`text-${color}-500 mb-2`} size={32} />
                     <span className="font-bold text-lg text-gray-800">{posMap[key].label}</span>
                   </button>
@@ -445,91 +347,55 @@ const App = () => {
             </div>
           </div>
         );
-      
       case 'tense_select':
         return (
           <>
             {showRules && <RuleExplanationModal posType={posType} onClose={() => setShowRules(false)} />}
             <div className="text-center">
                 <div className="flex justify-between items-center mb-4">
-                    <button onClick={() => setStep('pos_select')} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 font-medium">
-                        <ArrowLeft size={14} />
-                        품사 선택
-                    </button>
-                    <button onClick={() => setShowRules(true)} className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-bold">
-                        <HelpCircle size={16} />
-                        규칙 설명
-                    </button>
+                    <button onClick={() => setStep('pos_select')} className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-indigo-600 font-medium"><ArrowLeft size={14} />품사 선택</button>
+                    <button onClick={() => setShowRules(true)} className="inline-flex items-center gap-2 text-sm text-indigo-600 hover:text-indigo-800 font-bold"><HelpCircle size={16} />규칙 설명</button>
                 </div>
                 <h2 className="text-xl font-semibold text-gray-700 mb-4 font-bold">시제 선택</h2>
                 <div className="space-y-4">
                 {tenseOptions.map(option => (
-                    <button key={option.key} onClick={() => handleTenseSelect(option.key)} className="w-full sm:w-72 bg-white text-gray-800 font-semibold py-3 px-6 border-2 border-gray-300 rounded-lg shadow-md hover:bg-indigo-500 hover:text-white hover:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-200 transform hover:scale-105">
-                    {option.label}
-                    </button>
+                    <button key={option.key} onClick={() => handleTenseSelect(option.key)} className="w-full sm:w-72 bg-white text-gray-800 font-semibold py-3 px-6 border-2 border-gray-300 rounded-lg shadow-md hover:bg-indigo-500 hover:text-white transition-all duration-200 transform hover:scale-105">{option.label}</button>
                 ))}
                 </div>
             </div>
           </>
         );
-
       case 'quiz':
         const currentQuestion = questions[currentIndex];
         if (!currentQuestion) return null;
         return (
           <div>
             <div className="flex justify-between items-center bg-indigo-50 p-3 rounded-lg mb-4">
-              <button onClick={resetQuiz} className="p-2 text-gray-500 hover:text-red-500 transition-colors" title="처음으로">
-                <Home size={24} />
-              </button>
-              <div className="text-lg font-semibold text-indigo-800">
-                문제 {currentIndex + 1} / {questions.length}
-              </div>
-              <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-lg text-white transition-colors duration-300 ${timer > 3 ? 'bg-green-500' : 'bg-red-500'}`}>
-                {timer}
-              </div>
-              <div className="text-lg font-semibold text-indigo-800">
-                Score: {score}
-              </div>
+              <button onClick={resetQuiz} className="p-2 text-gray-500 hover:text-red-500 transition-colors" title="처음으로"><Home size={24} /></button>
+              <div className="text-lg font-semibold text-indigo-800">문제 {currentIndex + 1} / {questions.length}</div>
+              <div className={`flex items-center justify-center w-10 h-10 rounded-full font-bold text-lg text-white transition-colors duration-300 ${timer > 3 ? 'bg-green-500' : 'bg-red-500'}`}>{timer}</div>
+              <div className="text-lg font-semibold text-indigo-800">Score: {score}</div>
             </div>
             <div className="mt-6 text-center bg-gray-100 p-6 rounded-lg border-2 border-indigo-100">
               <h3 className="text-3xl font-bold text-indigo-700 tracking-wider">{currentQuestion.word}</h3>
               <p className="text-gray-600 mt-1 font-medium">{currentQuestion.reading} ({currentQuestion.korean})</p>
-              <p className="text-lg text-gray-800 mt-4 font-semibold">
-                「<span className="text-indigo-700">{currentQuestion.targetTenseLabel}</span>」은?
-              </p>
+              <p className="text-lg text-gray-800 mt-4 font-semibold">「<span className="text-indigo-700">{currentQuestion.targetTenseLabel}</span>」은?</p>
             </div>
             <div className="mt-6 space-y-3">
               {currentQuestion.options.map((option, index) => {
                 const isCorrect = option === currentQuestion.correctAnswer;
                 let buttonClass = 'w-full text-left text-lg p-4 border-2 rounded-lg transition-colors duration-200 font-medium';
                 if (isAnswered) {
-                  if (isCorrect) {
-                    buttonClass += ' bg-green-200 border-green-400 text-green-900 font-bold';
-                  } else if (selectedAnswer === option) {
-                    buttonClass += ' bg-red-200 border-red-400 text-red-900 font-bold';
-                  } else {
-                    buttonClass += ' bg-white border-gray-300 text-gray-800 opacity-60';
-                  }
-                } else {
-                  buttonClass += ' bg-white border-gray-300 text-gray-800 hover:bg-indigo-50 hover:border-indigo-400';
-                }
-                return (
-                  <button key={index} onClick={() => handleAnswerSelect(option)} disabled={isAnswered} className={buttonClass}>
-                    {option}
-                  </button>
-                );
+                  if (isCorrect) buttonClass += ' bg-green-200 border-green-400 text-green-900 font-bold';
+                  else if (selectedAnswer === option) buttonClass += ' bg-red-200 border-red-400 text-red-900 font-bold';
+                  else buttonClass += ' bg-white border-gray-300 text-gray-800 opacity-60';
+                } else buttonClass += ' bg-white border-gray-300 text-gray-800 hover:bg-indigo-50 hover:border-indigo-400';
+                return <button key={index} onClick={() => handleAnswerSelect(option)} disabled={isAnswered} className={buttonClass}>{option}</button>;
               })}
             </div>
-            {isAnswered && (
-              <button onClick={handleNextQuestion} className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:bg-blue-700 transition-colors shadow-lg animate-fade-in">
-                {currentIndex < questions.length - 1 ? '다음 문제로' : '결과 보기'}
-                <ArrowRight size={20} />
-              </button>
-            )}
+            {isAnswered && <button onClick={handleNextQuestion} className="w-full mt-6 flex items-center justify-center gap-2 bg-blue-600 text-white font-bold py-4 px-6 rounded-xl hover:bg-blue-700 transition-colors shadow-lg animate-fade-in">{currentIndex < questions.length - 1 ? '다음 문제로' : '결과 보기'}<ArrowRight size={20} /></button>}
           </div>
         );
-
       case 'result':
         return (
           <div className="text-center space-y-4">
@@ -538,7 +404,6 @@ const App = () => {
               <p className="text-xl text-indigo-800 font-medium">당신의 점수</p>
               <p className="text-6xl font-bold text-indigo-700 my-2">{score} / {questions.length}</p>
             </div>
-            
             <div className="text-left">
                 <h3 className="text-lg font-bold text-gray-800 mb-2 border-b-2 border-gray-100 pb-1">정답 확인</h3>
                 <div className="space-y-2 max-h-60 overflow-y-auto p-3 bg-gray-50 rounded-lg border shadow-inner">
@@ -546,55 +411,31 @@ const App = () => {
                         <div key={index} className={`p-3 rounded-lg border-l-4 shadow-sm ${item.isCorrect ? 'border-green-500 bg-white' : 'border-red-500 bg-white'}`}>
                             <div className="flex justify-between items-center">
                                 <p className="font-bold text-gray-800">Q{index + 1}. {item.word} ({item.tense})</p>
-                                {item.isCorrect ? 
-                                    <span className="flex items-center gap-1 text-green-600 font-bold"><Check size={16}/>정답</span> : 
-                                    <span className="flex items-center gap-1 text-red-600 font-bold"><X size={16}/>오답</span>
-                                }
+                                {item.isCorrect ? <span className="flex items-center gap-1 text-green-600 font-bold"><Check size={16}/>정답</span> : <span className="flex items-center gap-1 text-red-600 font-bold"><X size={16}/>오답</span>}
                             </div>
-                            {!item.isCorrect && (
-                                <p className="text-sm text-red-700 mt-1">당신의 답변: <span className="font-medium">{item.selectedAnswer || '(시간 초과)'}</span></p>
-                            )}
+                            {!item.isCorrect && <p className="text-sm text-red-700 mt-1">당신의 답변: <span className="font-medium">{item.selectedAnswer || '(시간 초과)'}</span></p>}
                             <p className="text-sm text-gray-600 mt-1">정확한 답변: <span className="text-indigo-600 font-bold">{item.correctAnswer}</span></p>
                         </div>
                     ))}
                 </div>
             </div>
-
             <div className="space-y-3 pt-2">
-                <button onClick={retrySameQuiz} className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-4 px-6 rounded-xl hover:bg-indigo-700 transition-colors shadow-md">
-                  <RefreshCw size={18} />
-                  <span>다시 도전하기</span>
-                </button>
-                <button onClick={resetQuiz} className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-600 font-bold py-3 px-6 rounded-xl hover:bg-gray-200 transition-colors">
-                  <ArrowLeft size={18} />
-                  <span>문제 선택으로 돌아가기</span>
-                </button>
+                <button onClick={retrySameQuiz} className="w-full flex items-center justify-center gap-2 bg-indigo-600 text-white font-bold py-4 px-6 rounded-xl hover:bg-indigo-700 transition-colors shadow-md"><RefreshCw size={18} /><span>다시 도전하기</span></button>
+                <button onClick={resetQuiz} className="w-full flex items-center justify-center gap-2 bg-gray-100 text-gray-600 font-bold py-3 px-6 rounded-xl hover:bg-gray-200 transition-colors"><ArrowLeft size={18} /><span>문제 선택으로 돌아가기</span></button>
             </div>
           </div>
         );
-
-      default:
-        return null;
+      default: return null;
     }
   };
 
   return (
     <>
       <style>{`
-        @keyframes fade-in {
-          from { opacity: 0; transform: translateY(5px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        .animate-fade-in {
-          animation: fade-in 0.3s ease-out forwards;
-        }
-        @keyframes scale-up {
-          from { transform: scale(0.95); opacity: 0; }
-          to { transform: scale(1); opacity: 1; }
-        }
-        .animate-scale-up {
-          animation: scale-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-        }
+        @keyframes fade-in { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .animate-fade-in { animation: fade-in 0.3s ease-out forwards; }
+        @keyframes scale-up { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .animate-scale-up { animation: scale-up 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
       `}</style>
       <div style={{ fontFamily: "'BIZ UDPGothic', sans-serif" }} className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
         <GeometricBackground />
@@ -604,11 +445,7 @@ const App = () => {
             <p className="text-gray-400 text-sm mt-2 font-medium uppercase tracking-widest">Japanese Tense Quiz</p>
           </header>
           {renderContent()}
-          {step === 'pos_select' && (
-              <footer className="text-center text-gray-400 text-xs mt-10 font-medium">
-                  © Akihiro Suwa 2025
-              </footer>
-          )}
+          {step === 'pos_select' && <footer className="text-center text-gray-400 text-xs mt-10 font-medium">© Akihiro Suwa 2025</footer>}
         </div>
       </div>
     </>
